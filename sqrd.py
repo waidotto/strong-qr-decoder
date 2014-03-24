@@ -824,15 +824,21 @@ if __name__ == '__main__':
 	offset = data_code_num_table[version - 1][error_correction_level]
 	for i in range(block_num):
 		t = []
-		for j in range(offset // block_num + (1 if (block_num - (offset % block_num)) <= i else 0)): #データ部
+		for j in range(offset // block_num): #データ部
 			t.append(blocks[j * block_num + i])
+		if offset % block_num != 0: #端数のある場合
+			remain = offset % block_num
+			if (block_num - remain) <= i:
+				t.append(blocks[(offset // block_num) * block_num + (i - (block_num - remain))])
 		for j in range((len(blocks) - offset) // block_num): #誤り訂正符号部
 			t.append(blocks[offset + j * block_num + i])
 		t.reverse()
 		RS_blocks.append(t)
 	if args.verbose:
 		print u'RSブロック数:\t{0}'.format(len(RS_blocks))
-		print u'RSブロック分割後:\t{0}'.format(repr(RS_blocks))
+		print u'RSブロック分割後:'
+		for i in range(len(RS_blocks)):
+			print '{0}'.format(repr(RS_blocks[i]))
 	#不明モジュールを含むコードワードの数を数える
 	unknown_code_nums = []
 	for bs in RS_blocks:
@@ -890,7 +896,7 @@ if __name__ == '__main__':
 				stdoutColor('[ N O ]', 'green')
 			else:
 				stdoutColor('[ YES ]', 'red')
-			print u' 誤り検出の必要性'
+			print u' 誤り訂正の必要性'
 		if no_error or args.no_correction: #誤りはない
 			continue #次のブロックへ
 		#誤りの個数の計算
