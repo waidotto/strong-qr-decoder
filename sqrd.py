@@ -452,6 +452,10 @@ if __name__ == '__main__':
 			else:
 				sys.stderr.write(u'error: 不正な文字が含まれています\n')
 				sys.exit(1)
+	#読み込んだデータの表示
+	if args.verbose:
+		print u'読み込んだデータ:'
+		showData(data)
 
 	#--------------------------------固定パターンのチェック--------------------------------
 	#位置検出パターン(finder pattern)が間違っていないかどうか
@@ -460,6 +464,7 @@ if __name__ == '__main__':
 	else:
 		valid_finder_pattern = False
 	if args.verbose:
+		print ''
 		if valid_finder_pattern:
 			stdoutColor('[ OK ]', 'green')
 		else:
@@ -530,21 +535,6 @@ if __name__ == '__main__':
 		for j in range(6): #右上の型番情報を除外
 			for i in range(3):
 				is_data_module[-11 + i][j] = False
-	#常に暗であるモジュールが間違っていないかどうか
-	if data[8][4 * version + 9] == 0:
-		valid_always_black = False
-	else:
-		valid_always_black = True
-	if args.verbose:
-		if valid_always_black:
-			stdoutColor('[ OK ]', 'green')
-		else:
-			stdoutColor('[ NG ]', 'red')
-		print u' 常暗モジュール'
-	#読み込んだデータの表示
-	if args.verbose:
-		print u'読み込んだデータ:'
-		showData(data)
 
 	#--------------------------------型番情報のチェック--------------------------------
 	if 7 <= version:
@@ -560,7 +550,7 @@ if __name__ == '__main__':
 					left_bottom += '?'
 		left_bottom = left_bottom[::-1]
 		if args.verbose:
-			print u'型番情報(左下):\t\t{0}'.format(left_bottom)
+			print u'\n型番情報(左下):\t\t{0}'.format(left_bottom)
 		#右上の型番情報
 		right_top = ''
 		for j in range(6):
@@ -607,7 +597,7 @@ if __name__ == '__main__':
 		if index == -1: #誤り訂正失敗
 			if args.verbose:
 				stdoutColor('[ NG ]', 'red')
-				print u' 誤り訂正'
+				print u' 型番情報の誤り訂正'
 		else:
 			if args.verbose:
 				stdoutColor('[ OK ]', 'green')
@@ -617,6 +607,18 @@ if __name__ == '__main__':
 				print u'型番情報(誤り訂正後):\t{0}'.format(version_information)
 
 	#--------------------------------形式情報のチェック--------------------------------
+	#常に暗であるモジュールが間違っていないかどうか
+	if data[8][4 * version + 9] == 0:
+		valid_always_black = False
+	else:
+		valid_always_black = True
+	if args.verbose:
+		print ''
+		if valid_always_black:
+			stdoutColor('[ OK ]', 'green')
+		else:
+			stdoutColor('[ NG ]', 'red')
+		print u' 常暗モジュール'
 	#形式情報(format information)の取得
 	format_mask = '101010000010010'
 	#横方向の形式情報
@@ -707,7 +709,7 @@ if __name__ == '__main__':
 	if index == -1: #誤り訂正失敗
 		if args.verbose:
 			stdoutColor('[ NG ]', 'red')
-			print u' 誤り訂正'
+			print u' 形式情報の誤り訂正'
 		if '?' in composed_unmask[:5] and not (args.error_correction != None and args.mask != None): #データ部が全て不明で、引数指定もなし
 			sys.stderr.write(u'error: 形式情報のデータ部が不明、かつ誤り訂正に失敗しました\n')
 			sys.exit(1)
@@ -728,7 +730,7 @@ if __name__ == '__main__':
 			print u'形式情報(誤り訂正後):\t{0}'.format(format_information)
 	#誤り訂正レベル(error correction level)の取得
 	if args.error_correction != None:
-		error_correction_level = int(args.error_correction, 2)
+		error_correction_level = int(args.error_correction, 0)
 	else:
 		error_correction_level = int(format_information[:2], 2)
 	if error_correction_level == 0b01:
@@ -740,10 +742,10 @@ if __name__ == '__main__':
 	if error_correction_level == 0b10:
 		m = 'H'
 	if args.verbose:
-		print u'誤り訂正レベル:\t{0:02b}\t({1})'.format(error_correction_level, m)
+		print u'\n誤り訂正レベル:\t{0:02b}\t({1})'.format(error_correction_level, m)
 	#マスクパターン(mask pattern)の取得
 	if args.mask != None:
-		mask_pattern = int(args.mask, 2)
+		mask_pattern = int(args.mask, 0)
 	else:
 		mask_pattern = int(format_information[2:5], 2)
 	if args.verbose:
@@ -775,7 +777,7 @@ if __name__ == '__main__':
 				elif data[x][y] == 1:
 					data[x][y] = 0
 	if args.verbose:
-		print u'マスク解除後のデータ:'
+		print u'\nマスク解除後のデータ:'
 		showData(data)
 
 	#--------------------------------コード語列読み込み--------------------------------
@@ -816,7 +818,7 @@ if __name__ == '__main__':
 					y += 1
 					x += 1
 	if args.verbose:
-		print u'総コード語数: {0}'.format(len(blocks))
+		print u'\n総コード語数: {0}'.format(len(blocks))
 		print u'データブロック: {0}'.format(repr(blocks))
 	#RSブロックに分割する
 	RS_blocks = []
@@ -871,8 +873,10 @@ if __name__ == '__main__':
 	else:
 		limit_error_correction_num = (len(blocks) - offset) // block_num // 2
 	if args.verbose:
-		print u'(最大)誤り訂正数: {0}'.format(limit_error_correction_num)
+		print u'\n(最大)誤り訂正数: {0}'.format(limit_error_correction_num)
 	for i in range(block_num): #各RSブロックについて個別に誤り訂正する
+		if args.verbose:
+			print u'\nRSブロック {0}'.format(i)
 		#不明モジュール数が誤り訂正数を超えていた場合は訂正不能
 		if limit_error_correction_num < unknown_code_nums[i]:
 			if args.verbose:
@@ -886,7 +890,7 @@ if __name__ == '__main__':
 		for j in range(syndrome_length):
 			syndromes.append(calcSyndrome(RS_blocks[i], j))
 		if args.verbose:
-			print u'シンドローム: {0}'.format(repr(syndromes))
+			print u'シンドローム: {0}'.format(repr(map(hex, syndromes)))
 		no_error = True
 		for j in range(syndrome_length):
 			if syndromes[j] != 0b00000000:
@@ -957,7 +961,7 @@ if __name__ == '__main__':
 	for i in range(len(RS_blocks)):
 		data_bytes.extend(RS_blocks[i][:offset // block_num + (1 if (block_num - (offset % block_num)) <= i else 0)])
 	if args.verbose:
-		print u'最終的なデータバイト列: {0} ({1}バイト)'.format(repr(map(hex, data_bytes)), len(data_bytes))
+		print u'\n最終的なデータバイト列: {0} ({1}バイト)'.format(repr(map(hex, data_bytes)), len(data_bytes))
 	data_bits = ''
 	for block in data_bytes:
 		data_bits += '{0:08b}'.format(block)
@@ -968,7 +972,7 @@ if __name__ == '__main__':
 	while len(data_bits) != 0:
 		#モード指示子(mode indicator)の取得
 		if len(data_bits[:4]) != 4:
-			print u'残りビット数が4ビット未満のため終了'
+			print u'\n残りビット数が4ビット未満のため終了'
 			break
 		mode = int(data_bits[:4], 2)
 		m = ''
@@ -986,7 +990,7 @@ if __name__ == '__main__':
 			sys.stderr.write(u'error: 未対応のモード指示子です\n')
 			sys.exit(1)
 		if args.verbose:
-			print u'モード指示子:\t{0} ({1})'.format('{0:04b}'.format(mode), m)
+			print u'\nモード指示子:\t{0} ({1})'.format('{0:04b}'.format(mode), m)
 		data_bits = data_bits[4:]
 		#数字のとき
 		if mode == 0b0001:
@@ -1075,6 +1079,8 @@ if __name__ == '__main__':
 		if args.verbose:
 			print '残りのビット列: {0}'.format(data_bits)
 			print 'デコード済み文字列: {0}'.format(''.join(map(chr, data)))
+	if args.verbose:
+		print ''
 	print ''.join(map(chr, data))
 	
 
