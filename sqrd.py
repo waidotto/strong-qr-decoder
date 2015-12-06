@@ -972,7 +972,7 @@ if __name__ == '__main__':
 	while len(data_bits) != 0:
 		#モード指示子(mode indicator)の取得
 		if len(data_bits[:4]) != 4:
-			print u'\n残りビット数が4ビット未満のため終了'
+			sys.stderr.write(u'\n残りビット数が4ビット未満のため終了\n')
 			break
 		mode = int(data_bits[:4], 2)
 		m = ''
